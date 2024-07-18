@@ -8,7 +8,7 @@ dotenv.config();
 
 const app = express();
 const options={
-    origin: ['http://localhost:3000',process.env.FRONTEND_URL],
+    origin: ['http://localhost:3000',process.env.FRONTEND_URL,"https://smart-grower-frontend.vercel.app"],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
 };
