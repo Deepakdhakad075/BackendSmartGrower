@@ -21,6 +21,10 @@ require('./config/database').connect();
 // Routes
 app.use('/api/users', userRoutes);
 app.use('/api/labours', labourRoutes);
+  
+app.use('/',(req,res)=>{
+    res.send('Server is running successfully');
+})
 
 const PORT = process.env.PORT || 4000;
 
