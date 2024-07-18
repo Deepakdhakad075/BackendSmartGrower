@@ -4,9 +4,16 @@ const dotenv = require('dotenv');
 const userRoutes = require('./routes/userRoutes');
 const labourRoutes = require('./routes/labourRoutes');
 const cors = require('cors');
+const helmet = require('helmet');
 dotenv.config();
 
 const app = express();
+
+app.use(helmet());
+
+// Set Referrer-Policy
+app.use(helmet.referrerPolicy({ policy: 'strict-origin-when-cross-origin' }));
+
 const options={
     origin: ['http://localhost:3000',process.env.FRONTEND_URL,"https://smart-grower-frontend.vercel.app"],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
