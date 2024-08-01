@@ -12,14 +12,42 @@ const addLabour = asyncHandler(async (req, res) => {
 // Get all labours for the logged-in user
 const getLabours = asyncHandler(async (req, res) => {
     const labours = await Labour.find({ owner: req.user._id });
-    res.json(labours);
+    const laboursWithDueAmounts = labours.map(labour => {
+      const totalDailyCharges = labour.dailyReports.reduce((acc, report) => acc + report.dailyCharge, 0);
+      const totalDepositAmount = labour.paid.reduce((acc, payment) => acc + payment.totalPaid, 0);
+      const totalDueAmount = totalDailyCharges - totalDepositAmount;
+
+      return {
+          ...labour._doc, // Use _doc to get the plain object representation of the MongoDB document
+          totalDailyCharges,
+          totalDepositAmount,
+          totalDueAmount,
+      };
+  });
+  const totalDueAmountAllLabours = laboursWithDueAmounts.reduce((acc, labour) => acc + labour.totalDueAmount, 0);
+  res.json({
+    labours: laboursWithDueAmounts,
+    totalDueAmountAllLabours
+});
 });
 
 // Get a labour by ID
 const getLabourById = asyncHandler(async (req, res) => {
     const labour = await Labour.findById(req.params.id);
+     
+     const totalDailyCharges = labour.dailyReports.reduce((acc, report) => acc + report.dailyCharge, 0);
+
+     // Calculate total deposit amount
+     const totalDepositAmount = labour.paid.reduce((acc, payment) => acc + payment.totalPaid, 0);
     if (labour) {
-        res.json(labour);
+        res.status(200).json({
+          data: {
+            labour : labour,
+            totalDailyCharges: totalDailyCharges,
+            totalDepositAmount : totalDepositAmount,
+            totalDueAmount :  totalDailyCharges - totalDepositAmount,
+          }
+        });
     } else {
         res.status(404).json({ message: 'Labour not found' });
     }
@@ -159,6 +187,47 @@ const createReceipt = async (req, res) => {
       res.status(500).json({ message: 'Failed to update daily report', error });
     }
   });
+
+
+  const createDeposit = async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { totalPaid, date } = req.body;
+  
+      const labour = await Labour.findById(id);
+      if (!labour) return res.status(404).json({ message: 'Labour not found' });
+  
+      const newDeposit = { totalPaid, date: date || Date.now() };
+      labour.paid.push(newDeposit);
+  
+      await labour.save();
+      res.status(201).json(labour);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  };
+  
+  // Update a deposit entry
+  const updateDeposit = async (req, res) => {
+    try {
+      const { labourId, depositId } = req.params;
+      const { totalPaid, date } = req.body;
+  
+      const labour = await Labour.findById(labourId);
+      if (!labour) return res.status(404).json({ message: 'Labour not found' });
+  
+      const deposit = labour.paid.id(depositId);
+      if (!deposit) return res.status(404).json({ message: 'Deposit not found' });
+  
+      if (totalPaid !== undefined) deposit.totalPaid = totalPaid;
+      if (date !== undefined) deposit.date = date;
+  
+      await labour.save();
+      res.status(200).json(labour);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  };
   
 module.exports = {
     addLabour,
@@ -170,4 +239,6 @@ module.exports = {
     createReceipt,
     deleteDailyReport,
     editDailyReport,
+    createDeposit,
+    updateDeposit
 };

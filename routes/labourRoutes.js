@@ -8,7 +8,9 @@ const {
     addDailyReport,
     createReceipt,
     deleteDailyReport,
-    editDailyReport
+    editDailyReport,
+    updateDeposit,
+    createDeposit
 } = require('../controllers/labourController');
 const { protect } = require('../middleware/authMiddleware');
 const router = express.Router();
@@ -26,4 +28,10 @@ router.post('/:labourId/dailyReports', protect, addDailyReport);
 router.post('/labours/:id/receipts', createReceipt);
 router.delete('/:labourId/dailyReports/:reportId', protect, deleteDailyReport);
 router.put('/:labourId/dailyReports/:reportId', protect, editDailyReport);
+
+// Route to create a deposit entry
+router.post('/labours/:id/paid', createDeposit);
+
+// Route to update a deposit entry
+router.put('/labours/:labourId/paid/:depositId', updateDeposit);
 module.exports = router;

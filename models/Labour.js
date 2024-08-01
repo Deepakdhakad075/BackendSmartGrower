@@ -7,7 +7,7 @@ const dailyReportSchema = new mongoose.Schema({
   workHours: { type: Number },
   rate: { type: Number },
   description: { type: String, required: true },
-  dailyCharge: { type: Number, required: true }
+  dailyCharge: { type: Number, required: true },
 });
 
 // Receipt schema
@@ -19,12 +19,24 @@ const receiptSchema = new mongoose.Schema({
   due: { type: Number, required: true }
 });
 
+const depositeSchema = new mongoose.Schema({
+  totalPaid: {
+    type: Number,
+    default: 0
+  },
+  date: {
+    type: Date,
+    default: Date.now
+  }
+});
+
 // Labour schema
 const labourSchema = new mongoose.Schema({
   owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   name: { type: String, required: true },
   dailyReports: [dailyReportSchema], // Embedding dailyReportSchema array
-  receipts: [receiptSchema] // Embedding receiptSchema array
+  receipts: [receiptSchema], // Embedding receiptSchema array
+  paid: [depositeSchema]
 });
 
 const Labour = mongoose.model('Labour', labourSchema);
