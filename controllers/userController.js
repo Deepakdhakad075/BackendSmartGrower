@@ -50,43 +50,48 @@ const loginUser = asyncHandler(async (req, res) => {
   }
 });
 
-// const getUserProfile = asyncHandler(async (req, res) => {
-//   const user = await User.findById(req.user._id);
-
-//   if (user) {
-//     res.json({
-//       _id: user._id,
-//       name: user.name,
-//       email: user.email,
-//     });
-//   } else {
-//     res.status(404);
-//     throw new Error('User not found');
-//   }
-// });
 
 const getUserProfile = asyncHandler(async (req, res) => {
   const userId = req.user._id;
 
+  // Fetch all labours for the logged-in user
   const labours = await Labour.find({ owner: userId });
-  const user = await User.findById(req.user._id);
+
+  // Calculate total paid amount (sum of receipts and deposits)
   const totalPaid = labours.reduce((acc, labour) => {
-    return acc + labour.receipts.reduce((acc, receipt) => acc + receipt.totalPay, 0);
+    // Calculate total receipt amount for each labour
+    const totalReceiptAmount = labour.receipts.reduce((acc, receipt) => acc + receipt.totalPay, 0);
+
+    // Calculate total deposit amount for each labour
+    const totalDepositAmount = labour.paid.reduce((acc, deposit) => acc + deposit.totalPaid, 0);
+
+    // Sum both receipts and deposits for the current labour
+    return acc + totalReceiptAmount + totalDepositAmount;
   }, 0);
 
+  // Calculate total due amount
   const totalDue = labours.reduce((acc, labour) => {
     return acc + labour.receipts.reduce((acc, receipt) => acc + receipt.due, 0);
   }, 0);
 
-  res.json({
-    _id: user._id,
-    name: user.name,
-    email: user.email,
-    totalLabours: labours.length,
-    totalPaid,
-    totalDue
-  });
+  // Fetch user details
+  const user = await User.findById(userId);
+
+  if (user) {
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      totalLabours: labours.length,
+      totalPaid,
+      totalDue
+    });
+  } else {
+    res.status(404);
+    throw new Error('User not found');
+  }
 });
+
 
 
 
